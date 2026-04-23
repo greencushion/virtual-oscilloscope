@@ -76,8 +76,18 @@ canvas#crt{border:4px solid #1a1a1a;border-radius:3px;display:block;cursor:cross
 .unilab{background:#d4cfc0;border-radius:5px;border:2px solid #9a9488;}
 .ulab-bar{background:#b8b2a0;padding:4px 12px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #9a9488;border-radius:4px 4px 0 0;}
 .ulab-title{font-size:10px;color:#333;letter-spacing:1px;font-weight:bold;text-transform:uppercase;}
-.ulab-body{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;flex-wrap:wrap;}
-.ch-sect{display:flex;flex-direction:column;gap:7px;align-items:center;padding:10px;background:#c0bcaa;border-radius:4px;border:1px solid #9a9488;min-width:210px;flex:1;}
+.ulab-body{display:flex;gap:12px;padding:12px 14px;align-items:flex-start;flex-wrap:nowrap;}
+.ulab-channels{display:flex;flex-direction:column;gap:12px;flex:1;min-width:0;}
+.ch-sect{display:flex;flex-direction:column;gap:7px;align-items:center;padding:10px;background:#c0bcaa;border-radius:4px;border:1px solid #9a9488;width:100%;}
+.ch-sect-dials{display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;width:100%;}
+.dial-wrap{display:flex;flex-direction:column;align-items:center;gap:4px;}
+.dial-wrap svg{display:block;max-width:88px;max-height:88px;width:100%;height:auto;}
+.ulab-audio{display:flex;flex-direction:column;gap:10px;flex-shrink:0;}
+@media(max-width:520px){
+  .ulab-body{flex-direction:column;}
+  .ulab-audio{width:100%;flex-direction:row;flex-wrap:wrap;gap:10px;}
+  .audio-sect,.sock-grp-wrap{flex:1;min-width:140px;}
+}
 .ch-sect-hdr{font-size:9px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid #9a9488;padding-bottom:3px;width:100%;text-align:center;}
 .lcd{background:#c8d840;border:2px solid #8a9a10;border-radius:3px;padding:6px 14px;font-family:'Courier New',monospace;font-size:24px;font-weight:bold;color:#1a2200;min-width:120px;text-align:right;letter-spacing:2px;}
 .lcd-w{display:flex;flex-direction:column;align-items:center;gap:2px;}
@@ -269,118 +279,121 @@ footer{margin-top:10px;font-size:9px;color:#bbb;letter-spacing:2px;text-align:ce
     <div class="screw"></div>
   </div>
   <div class="ulab-body">
+    <div class="ulab-channels">
 
-    <!-- Channel A -->
-    <div class="ch-sect">
-      <div class="ch-sect-hdr" style="color:#004400">Channel A &#8212; CH1</div>
-      <div class="ch-tog aon" id="gen-a-tog" onclick="togGenCh('a')">CH A: ON</div>
-      <div class="lcd-w">
-        <div class="lcd" id="lcd-a">200.0</div>
-        <div class="lcd-lbl">Frequency (Hz)</div>
-      </div>
-      <div style="display:flex;gap:12px;align-items:center">
-        <div class="dg">
-          <div class="dl">RANGE</div>
-          <svg id="deca-svg" width="84" height="84" viewBox="0 0 84 84" overflow="visible" style="cursor:pointer" onclick="cycDec('a')">
-            <g id="deca-scale"></g>
-            <circle cx="42" cy="42" r="32" fill="#888" stroke="#666" stroke-width="2"/>
-            <circle cx="42" cy="42" r="22" fill="#3a3a3a" stroke="#222"/>
-            <circle cx="42" cy="42" r="8" fill="#555"/>
-            <line id="deca-d" x1="42" y1="42" x2="42" y2="13" stroke="#ff4400" stroke-width="3" stroke-linecap="round"/>
-          </svg>
-          <div style="font-size:9px;color:#222;font-weight:bold;text-align:center" id="dec-a-lbl">x10</div>
+      <!-- Channel A -->
+      <div class="ch-sect">
+        <div class="ch-sect-hdr" style="color:#004400">Channel A &#8212; CH1</div>
+        <div class="ch-tog aon" id="gen-a-tog" onclick="togGenCh('a')">CH A: ON</div>
+        <div class="lcd-w">
+          <div class="lcd" id="lcd-a">200.0</div>
+          <div class="lcd-lbl">Frequency (Hz)</div>
         </div>
-        <div class="dg">
-          <div class="dl">TUNING</div>
-          <svg class="ksv" id="tune-a" width="88" height="88" viewBox="0 0 88 88" overflow="visible">
-            <g id="ticksa"></g>
-            <circle cx="44" cy="44" r="38" fill="#777" stroke="#555" stroke-width="2"/>
-            <circle cx="44" cy="44" r="28" fill="#2a2a2a" stroke="#1a1a1a" stroke-width="2"/>
-            <circle cx="44" cy="44" r="10" fill="#444"/>
-            <line id="tunead" x1="44" y1="44" x2="44" y2="10" stroke="#ff4400" stroke-width="3" stroke-linecap="round"/>
-          </svg>
-          <div style="font-size:8px;color:#555;text-align:center">Drag to tune</div>
+        <div class="ch-sect-dials">
+          <div class="dial-wrap">
+            <div class="dl">RANGE</div>
+            <svg id="deca-svg" viewBox="-8 -8 100 100" overflow="visible" style="cursor:pointer;width:clamp(72px,18vw,88px);height:clamp(72px,18vw,88px);display:block;" onclick="cycDec('a')">
+              <g id="deca-scale"></g>
+              <circle cx="42" cy="42" r="32" fill="#888" stroke="#666" stroke-width="2"/>
+              <circle cx="42" cy="42" r="22" fill="#3a3a3a" stroke="#222"/>
+              <circle cx="42" cy="42" r="8" fill="#555"/>
+              <line id="deca-d" x1="42" y1="42" x2="42" y2="13" stroke="#ff4400" stroke-width="3" stroke-linecap="round"/>
+            </svg>
+            <div style="font-size:9px;color:#222;font-weight:bold;text-align:center" id="dec-a-lbl">x10</div>
+          </div>
+          <div class="dial-wrap">
+            <div class="dl">TUNING</div>
+            <svg class="ksv" id="tune-a" viewBox="-8 -8 104 104" overflow="visible" style="width:clamp(72px,18vw,88px);height:clamp(72px,18vw,88px);display:block;">
+              <g id="ticksa"></g>
+              <circle cx="44" cy="44" r="38" fill="#777" stroke="#555" stroke-width="2"/>
+              <circle cx="44" cy="44" r="28" fill="#2a2a2a" stroke="#1a1a1a" stroke-width="2"/>
+              <circle cx="44" cy="44" r="10" fill="#444"/>
+              <line id="tunead" x1="44" y1="44" x2="44" y2="10" stroke="#ff4400" stroke-width="3" stroke-linecap="round"/>
+            </svg>
+            <div style="font-size:8px;color:#555;text-align:center">Drag to tune</div>
+          </div>
+          <div class="dial-wrap">
+            <div class="dl">AMPLITUDE</div>
+            <svg class="ksv" id="ampa" viewBox="-8 -8 100 100" overflow="visible" style="width:clamp(72px,18vw,88px);height:clamp(72px,18vw,88px);display:block;">
+              <g id="ampa-scale"></g>
+              <circle cx="42" cy="42" r="32" fill="#888" stroke="#666" stroke-width="2"/>
+              <circle cx="42" cy="42" r="22" fill="#3a3a3a" stroke="#222"/>
+              <circle cx="42" cy="42" r="8" fill="#555"/>
+              <line id="ampad" x1="42" y1="42" x2="42" y2="13" stroke="#ff4400" stroke-width="3" stroke-linecap="round"/>
+            </svg>
+            <div style="font-size:9px;color:#111;font-weight:bold" id="ampa-val">2.0 V</div>
+          </div>
         </div>
-        <div class="dg">
-          <div class="dl">AMPLITUDE</div>
-          <svg class="ksv" id="ampa" width="84" height="84" viewBox="0 0 84 84" overflow="visible">
-            <g id="ampa-scale"></g>
-            <circle cx="42" cy="42" r="32" fill="#888" stroke="#666" stroke-width="2"/>
-            <circle cx="42" cy="42" r="22" fill="#3a3a3a" stroke="#222"/>
-            <circle cx="42" cy="42" r="8" fill="#555"/>
-            <line id="ampad" x1="42" y1="42" x2="42" y2="13" stroke="#ff4400" stroke-width="3" stroke-linecap="round"/>
-          </svg>
-          <div style="font-size:9px;color:#111;font-weight:bold" id="ampa-val">2.0 V</div>
+        <div class="wbr">
+          <div class="wbtn" id="wba-sine" onclick="setWave('a','sine')"><div class="wled on" id="wla-sine"></div><div class="wbl">SINE</div><svg width="26" height="13" viewBox="0 0 26 13"><path d="M0 6.5 Q4 0 9 6.5 Q13 13 18 6.5 Q22 0 26 6.5" fill="none" stroke="#333" stroke-width="1.5"/></svg></div>
+          <div class="wbtn" id="wba-square" onclick="setWave('a','square')"><div class="wled" id="wla-square"></div><div class="wbl">SQUARE</div><svg width="26" height="13" viewBox="0 0 26 13"><polyline points="0,11 0,2 9,2 9,11 18,11 18,2 26,2 26,11" fill="none" stroke="#333" stroke-width="1.5"/></svg></div>
+          <div class="wbtn" id="wba-tri" onclick="setWave('a','triangle')"><div class="wled" id="wla-tri"></div><div class="wbl">TRIANGLE</div><svg width="26" height="13" viewBox="0 0 26 13"><polyline points="0,12 7,1 13,12 20,1 26,12" fill="none" stroke="#333" stroke-width="1.5"/></svg></div>
         </div>
       </div>
-      <div class="wbr">
-        <div class="wbtn" id="wba-sine" onclick="setWave('a','sine')"><div class="wled on" id="wla-sine"></div><div class="wbl">SINE</div><svg width="26" height="13" viewBox="0 0 26 13"><path d="M0 6.5 Q4 0 9 6.5 Q13 13 18 6.5 Q22 0 26 6.5" fill="none" stroke="#333" stroke-width="1.5"/></svg></div>
-        <div class="wbtn" id="wba-square" onclick="setWave('a','square')"><div class="wled" id="wla-square"></div><div class="wbl">SQUARE</div><svg width="26" height="13" viewBox="0 0 26 13"><polyline points="0,11 0,2 9,2 9,11 18,11 18,2 26,2 26,11" fill="none" stroke="#333" stroke-width="1.5"/></svg></div>
-        <div class="wbtn" id="wba-tri" onclick="setWave('a','triangle')"><div class="wled" id="wla-tri"></div><div class="wbl">TRIANGLE</div><svg width="26" height="13" viewBox="0 0 26 13"><polyline points="0,12 7,1 13,12 20,1 26,12" fill="none" stroke="#333" stroke-width="1.5"/></svg></div>
-      </div>
-    </div>
 
-    <!-- Channel B -->
-    <div class="ch-sect">
-      <div class="ch-sect-hdr" style="color:#664400">Channel B &#8212; CH2</div>
-      <div class="ch-tog yon" id="gen-b-tog" onclick="togGenCh('b')">CH B: ON</div>
-      <div class="lcd-w">
-        <div class="lcd" id="lcd-b">440.0</div>
-        <div class="lcd-lbl">Frequency (Hz)</div>
-      </div>
-      <div style="display:flex;gap:12px;align-items:center">
-        <div class="dg">
-          <div class="dl">RANGE</div>
-          <svg id="decb-svg" width="84" height="84" viewBox="0 0 84 84" overflow="visible" style="cursor:pointer" onclick="cycDec('b')">
-            <g id="decb-scale"></g>
-            <circle cx="42" cy="42" r="32" fill="#888" stroke="#666" stroke-width="2"/>
-            <circle cx="42" cy="42" r="22" fill="#3a3a3a" stroke="#222"/>
-            <circle cx="42" cy="42" r="8" fill="#555"/>
-            <line id="decb-d" x1="42" y1="42" x2="42" y2="13" stroke="#ff4400" stroke-width="3" stroke-linecap="round"/>
-          </svg>
-          <div style="font-size:9px;color:#222;font-weight:bold;text-align:center" id="dec-b-lbl">x10</div>
+      <!-- Channel B -->
+      <div class="ch-sect">
+        <div class="ch-sect-hdr" style="color:#664400">Channel B &#8212; CH2</div>
+        <div class="ch-tog yon" id="gen-b-tog" onclick="togGenCh('b')">CH B: ON</div>
+        <div class="lcd-w">
+          <div class="lcd" id="lcd-b">440.0</div>
+          <div class="lcd-lbl">Frequency (Hz)</div>
         </div>
-        <div class="dg">
-          <div class="dl">TUNING</div>
-          <svg class="ksv" id="tune-b" width="88" height="88" viewBox="0 0 88 88" overflow="visible">
-            <g id="ticksb"></g>
-            <circle cx="44" cy="44" r="38" fill="#777" stroke="#555" stroke-width="2"/>
-            <circle cx="44" cy="44" r="28" fill="#2a2a2a" stroke="#1a1a1a" stroke-width="2"/>
-            <circle cx="44" cy="44" r="10" fill="#444"/>
-            <line id="tunebd" x1="44" y1="44" x2="44" y2="10" stroke="#ff4400" stroke-width="3" stroke-linecap="round"/>
-          </svg>
-          <div style="font-size:8px;color:#555;text-align:center">Drag to tune</div>
+        <div class="ch-sect-dials">
+          <div class="dial-wrap">
+            <div class="dl">RANGE</div>
+            <svg id="decb-svg" viewBox="-8 -8 100 100" overflow="visible" style="cursor:pointer;width:clamp(72px,18vw,88px);height:clamp(72px,18vw,88px);display:block;" onclick="cycDec('b')">
+              <g id="decb-scale"></g>
+              <circle cx="42" cy="42" r="32" fill="#888" stroke="#666" stroke-width="2"/>
+              <circle cx="42" cy="42" r="22" fill="#3a3a3a" stroke="#222"/>
+              <circle cx="42" cy="42" r="8" fill="#555"/>
+              <line id="decb-d" x1="42" y1="42" x2="42" y2="13" stroke="#ff4400" stroke-width="3" stroke-linecap="round"/>
+            </svg>
+            <div style="font-size:9px;color:#222;font-weight:bold;text-align:center" id="dec-b-lbl">x10</div>
+          </div>
+          <div class="dial-wrap">
+            <div class="dl">TUNING</div>
+            <svg class="ksv" id="tune-b" viewBox="-8 -8 104 104" overflow="visible" style="width:clamp(72px,18vw,88px);height:clamp(72px,18vw,88px);display:block;">
+              <g id="ticksb"></g>
+              <circle cx="44" cy="44" r="38" fill="#777" stroke="#555" stroke-width="2"/>
+              <circle cx="44" cy="44" r="28" fill="#2a2a2a" stroke="#1a1a1a" stroke-width="2"/>
+              <circle cx="44" cy="44" r="10" fill="#444"/>
+              <line id="tunebd" x1="44" y1="44" x2="44" y2="10" stroke="#ff4400" stroke-width="3" stroke-linecap="round"/>
+            </svg>
+            <div style="font-size:8px;color:#555;text-align:center">Drag to tune</div>
+          </div>
+          <div class="dial-wrap">
+            <div class="dl">AMPLITUDE</div>
+            <svg class="ksv" id="ampb" viewBox="-8 -8 100 100" overflow="visible" style="width:clamp(72px,18vw,88px);height:clamp(72px,18vw,88px);display:block;">
+              <g id="ampb-scale"></g>
+              <circle cx="42" cy="42" r="32" fill="#888" stroke="#666" stroke-width="2"/>
+              <circle cx="42" cy="42" r="22" fill="#3a3a3a" stroke="#222"/>
+              <circle cx="42" cy="42" r="8" fill="#555"/>
+              <line id="ampbd" x1="42" y1="42" x2="42" y2="13" stroke="#ff4400" stroke-width="3" stroke-linecap="round"/>
+            </svg>
+            <div style="font-size:9px;color:#111;font-weight:bold" id="ampb-val">2.0 V</div>
+          </div>
         </div>
-        <div class="dg">
-          <div class="dl">AMPLITUDE</div>
-          <svg class="ksv" id="ampb" width="84" height="84" viewBox="0 0 84 84" overflow="visible">
-            <g id="ampb-scale"></g>
-            <circle cx="42" cy="42" r="32" fill="#888" stroke="#666" stroke-width="2"/>
-            <circle cx="42" cy="42" r="22" fill="#3a3a3a" stroke="#222"/>
-            <circle cx="42" cy="42" r="8" fill="#555"/>
-            <line id="ampbd" x1="42" y1="42" x2="42" y2="13" stroke="#ff4400" stroke-width="3" stroke-linecap="round"/>
-          </svg>
-          <div style="font-size:9px;color:#111;font-weight:bold" id="ampb-val">2.0 V</div>
+        <div class="wbr">
+          <div class="wbtn" id="wbb-sine" onclick="setWave('b','sine')"><div class="wled on" id="wlb-sine"></div><div class="wbl">SINE</div><svg width="26" height="13" viewBox="0 0 26 13"><path d="M0 6.5 Q4 0 9 6.5 Q13 13 18 6.5 Q22 0 26 6.5" fill="none" stroke="#333" stroke-width="1.5"/></svg></div>
+          <div class="wbtn" id="wbb-square" onclick="setWave('b','square')"><div class="wled" id="wlb-square"></div><div class="wbl">SQUARE</div><svg width="26" height="13" viewBox="0 0 26 13"><polyline points="0,11 0,2 9,2 9,11 18,11 18,2 26,2 26,11" fill="none" stroke="#333" stroke-width="1.5"/></svg></div>
+          <div class="wbtn" id="wbb-tri" onclick="setWave('b','triangle')"><div class="wled" id="wlb-tri"></div><div class="wbl">TRIANGLE</div><svg width="26" height="13" viewBox="0 0 26 13"><polyline points="0,12 7,1 13,12 20,1 26,12" fill="none" stroke="#333" stroke-width="1.5"/></svg></div>
         </div>
       </div>
-      <div class="wbr">
-        <div class="wbtn" id="wbb-sine" onclick="setWave('b','sine')"><div class="wled on" id="wlb-sine"></div><div class="wbl">SINE</div><svg width="26" height="13" viewBox="0 0 26 13"><path d="M0 6.5 Q4 0 9 6.5 Q13 13 18 6.5 Q22 0 26 6.5" fill="none" stroke="#333" stroke-width="1.5"/></svg></div>
-        <div class="wbtn" id="wbb-square" onclick="setWave('b','square')"><div class="wled" id="wlb-square"></div><div class="wbl">SQUARE</div><svg width="26" height="13" viewBox="0 0 26 13"><polyline points="0,11 0,2 9,2 9,11 18,11 18,2 26,2 26,11" fill="none" stroke="#333" stroke-width="1.5"/></svg></div>
-        <div class="wbtn" id="wbb-tri" onclick="setWave('b','triangle')"><div class="wled" id="wlb-tri"></div><div class="wbl">TRIANGLE</div><svg width="26" height="13" viewBox="0 0 26 13"><polyline points="0,12 7,1 13,12 20,1 26,12" fill="none" stroke="#333" stroke-width="1.5"/></svg></div>
-      </div>
-    </div>
 
-    <!-- Audio + Sockets -->
-    <div style="display:flex;flex-direction:column;gap:10px;">
+    </div><!-- end ulab-channels -->
+
+    <!-- Audio + Sockets (right column on desktop, below on mobile) -->
+    <div class="ulab-audio">
       <div class="audio-sect">
         <div class="audio-lbl">Audio Output</div>
         <div class="ab" id="bt-spk" onclick="togSpk()" style="margin-bottom:3px">SPEAKER: OFF</div>
         <div class="ab" id="bt-mute" onclick="togMute()">MUTE: OFF</div>
         <div style="font-size:7.5px;color:#777;margin-top:5px;line-height:1.6">Click SPEAKER ON<br>to activate audio</div>
       </div>
-      <div class="sock-grp">
-        <div class="al" style="font-size:8px;color:#555;letter-spacing:1px;text-transform:uppercase">Outputs</div>
-        <div style="display:flex;gap:10px">
+      <div class="sock-grp-wrap">
+        <div class="al" style="font-size:8px;color:#555;letter-spacing:1px;text-transform:uppercase;text-align:center;margin-bottom:4px;">Outputs</div>
+        <div style="display:flex;gap:10px;justify-content:center;">
           <div style="text-align:center"><div class="sock"><div class="sock-in"></div></div><div style="font-size:8px;color:#555;margin-top:2px">A</div></div>
           <div style="text-align:center"><div class="sock"><div class="sock-in"></div></div><div style="font-size:8px;color:#555;margin-top:2px">B</div></div>
         </div>
@@ -952,6 +965,9 @@ initKnob('ampb',function(delta){
 
 updateLCD('a'); updateLCD('b');
 startAnim();
+// Auto-scale on first load so default signals fill the screen sensibly.
+// Use setTimeout to allow one animation frame to render first.
+setTimeout(function(){ autoScale(); }, 50);
 </script>
 </body>
 </html>
