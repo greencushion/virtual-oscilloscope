@@ -492,20 +492,28 @@ var froz1=null,froz2=null,animId=null;
 // ===== Web Audio =====
 var audioCtx=null,masterGain=null,oscA=null,oscB=null,gainA=null,gainB=null;
 var micStream=null,micAnalyser=null,micBuf=new Float32Array(1024);
-var audioReady=false;
 
 function initAudio(){
   if(audioCtx)return;
   audioCtx=new(window.AudioContext||window.webkitAudioContext)();
   masterGain=audioCtx.createGain(); masterGain.gain.value=0.2;
-  masterGain.connect(audioCtx.destination); audioReady=true;
+  masterGain.connect(audioCtx.destination);
 }
+
+// Resume the AudioContext (browsers suspend it until a user gesture, and may
+// re-suspend it after inactivity). Always call the callback after resuming.
 function resumeCtx(cb){
-  if(!audioCtx)initAudio();
-  if(audioCtx.state==='suspended')audioCtx.resume().then(cb); else cb();
+  if(!audioCtx){initAudio();}
+  if(audioCtx.state==='suspended'){
+    audioCtx.resume().then(function(){cb();});
+  } else {
+    cb();
+  }
 }
+
 function stopOscA(){if(oscA){try{oscA.stop();}catch(e){}oscA=null;gainA=null;}}
 function stopOscB(){if(oscB){try{oscB.stop();}catch(e){}oscB=null;gainB=null;}}
+
 function makeOsc(freq,wave,amp){
   var o=audioCtx.createOscillator(),g=audioCtx.createGain();
   o.type=wave==='triangle'?'triangle':wave==='square'?'square':'sine';
@@ -513,6 +521,7 @@ function makeOsc(freq,wave,amp){
   o.connect(g); g.connect(masterGain); o.start();
   return{osc:o,gain:g};
 }
+
 function startOscA(){
   if(!audioCtx||S.muted||!S.spkOn||S.micOn||!S.a.on)return;
   stopOscA(); var r=makeOsc(S.a.freq,S.a.wave,S.a.amp); oscA=r.osc; gainA=r.gain;
@@ -522,19 +531,41 @@ function startOscB(){
   stopOscB(); var r=makeOsc(S.b.freq,S.b.wave,S.b.amp); oscB=r.osc; gainB=r.gain;
 }
 function startBoth(){startOscA();startOscB();}
-function unlockAudio(){if(audioReady)return;initAudio();resumeCtx(startBoth);}
+
+// On every user interaction: create the AudioContext if needed, resume it if
+// suspended, then (re)start oscillators. This handles:
+//   1. First ever click — creates context and starts oscillators
+//   2. Context suspended by browser after inactivity — resumes and restarts
+//   3. No double-starting: stopOscA/B guard against duplicate nodes
+function unlockAudio(){
+  if(!audioCtx){
+    initAudio();
+    resumeCtx(startBoth);
+    return;
+  }
+  if(audioCtx.state==='suspended'){
+    audioCtx.resume().then(function(){
+      if(S.spkOn&&!S.muted){
+        if(!oscA&&S.a.on&&!S.micOn)startOscA();
+        if(!oscB&&S.b.on)startOscB();
+      }
+    });
+  }
+}
 document.addEventListener('mousedown',unlockAudio);
 document.addEventListener('touchstart',unlockAudio);
 
 function togSpk(){
   S.spkOn=!S.spkOn; var b=document.getElementById('bt-spk');
   b.textContent='SPEAKER: '+(S.spkOn?'ON':'OFF'); b.className='ab'+(S.spkOn?' aon':'');
-  if(!S.spkOn){stopOscA();stopOscB();}else resumeCtx(startBoth);
+  if(!S.spkOn){stopOscA();stopOscB();}
+  else{resumeCtx(startBoth);}
 }
 function togMute(){
   S.muted=!S.muted; var b=document.getElementById('bt-mute');
   b.textContent='MUTE: '+(S.muted?'ON':'OFF'); b.className='ab'+(S.muted?' muted':'');
-  if(S.muted){stopOscA();stopOscB();}else if(S.spkOn)resumeCtx(startBoth);
+  if(S.muted){stopOscA();stopOscB();}
+  else if(S.spkOn){resumeCtx(startBoth);}
 }
 function updateFreqA(){if(oscA)oscA.frequency.value=S.a.freq;else if(S.spkOn&&!S.muted&&audioCtx&&S.a.on)startOscA();}
 function updateFreqB(){if(oscB)oscB.frequency.value=S.b.freq;else if(S.spkOn&&!S.muted&&audioCtx&&S.b.on)startOscB();}
