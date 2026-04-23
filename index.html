@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Virtual School Oscilloscope</title>
+<title>Virtual Oscilloscope for Schools</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Arial Narrow',Arial,sans-serif;background:#555;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:12px 6px;}
@@ -105,7 +105,7 @@ footer{margin-top:10px;font-size:9px;color:#bbb;letter-spacing:2px;text-align:ce
 </style>
 </head>
 <body>
-<h1>Virtual School Oscilloscope</h1>
+<h1>Virtual Oscilloscope for Schools</h1>
 <div class="lab">
 
 <!-- ===== OSCILLOSCOPE ===== -->
@@ -374,9 +374,9 @@ footer{margin-top:10px;font-size:9px;color:#bbb;letter-spacing:2px;text-align:ce
     <div style="display:flex;flex-direction:column;gap:10px;">
       <div class="audio-sect">
         <div class="audio-lbl">Audio Output</div>
-        <div class="ab aon" id="bt-spk" onclick="togSpk()" style="margin-bottom:3px">SPEAKER: ON</div>
+        <div class="ab" id="bt-spk" onclick="togSpk()" style="margin-bottom:3px">SPEAKER: OFF</div>
         <div class="ab" id="bt-mute" onclick="togMute()">MUTE: OFF</div>
-        <div style="font-size:7.5px;color:#777;margin-top:5px;line-height:1.6">Click any control<br>to activate audio</div>
+        <div style="font-size:7.5px;color:#777;margin-top:5px;line-height:1.6">Click SPEAKER ON<br>to activate audio</div>
       </div>
       <div class="sock-grp">
         <div class="al" style="font-size:8px;color:#555;letter-spacing:1px;text-transform:uppercase">Outputs</div>
@@ -391,7 +391,7 @@ footer{margin-top:10px;font-size:9px;color:#bbb;letter-spacing:2px;text-align:ce
 </div>
 
 </div><!-- end .lab -->
-<footer>Virtual School Oscilloscope</footer>
+<footer>Virtual Oscilloscope for Schools</footer>
 
 <script>
 // ===== SVG helpers =====
@@ -484,105 +484,108 @@ var S={
   cursV:false,cursH:false,c1x:W*0.35,c2x:W*0.65,c1y:H*0.35,c2y:H*0.65,
   a:{freq:200,wave:'sine',decIdx:1,tuneAngle:-100,amp:2,on:true},
   b:{freq:440,wave:'sine',decIdx:1,tuneAngle:-55, amp:2,on:true},
-  spkOn:true,muted:false,micOn:false,
+  spkOn:false,muted:false,micOn:false,
   ka:{v1:0,v2:0,t:0,p1:0,p2:0,hp:0}
 };
 var froz1=null,froz2=null,animId=null;
 
 // ===== Web Audio =====
-var audioCtx=null,masterGain=null,oscA=null,oscB=null,gainA=null,gainB=null;
-var micStream=null,micAnalyser=null,micBuf=new Float32Array(1024);
+// Audio is OFF by default. The user explicitly clicks SPEAKER ON to start it.
+// This is the only 100% reliable cross-browser approach — the AudioContext is
+// created AND started inside the direct onclick handler of the speaker button,
+// guaranteeing it counts as a user gesture in every browser.
 
-function initAudio(){
-  if(audioCtx)return;
-  audioCtx=new(window.AudioContext||window.webkitAudioContext)();
-  masterGain=audioCtx.createGain(); masterGain.gain.value=0.2;
+var audioCtx=null, masterGain=null;
+var oscA=null, gainA=null;
+var oscB=null, gainB=null;
+var micStream=null, micAnalyser=null, micBuf=new Float32Array(1024);
+
+function buildAudioGraph(){
+  // Create context fresh — called only once, inside a real click handler
+  if(audioCtx) return;
+  var AC = window.AudioContext || window.webkitAudioContext;
+  audioCtx = new AC();
+  masterGain = audioCtx.createGain();
+  masterGain.gain.value = 0.25;
   masterGain.connect(audioCtx.destination);
 }
 
-// Resume the AudioContext (browsers suspend it until a user gesture, and may
-// re-suspend it after inactivity). Always call the callback after resuming.
-function resumeCtx(cb){
-  if(!audioCtx){initAudio();}
-  if(audioCtx.state==='suspended'){
-    audioCtx.resume().then(function(){cb();});
-  } else {
-    cb();
-  }
+function makeOscNode(freq, wave, amp){
+  var osc = audioCtx.createOscillator();
+  var g   = audioCtx.createGain();
+  osc.type = (wave==='square') ? 'square' : (wave==='triangle') ? 'triangle' : 'sine';
+  osc.frequency.value = freq;
+  g.gain.value = (amp / 5) * 0.28;
+  osc.connect(g);
+  g.connect(masterGain);
+  osc.start();
+  return { osc:osc, gain:g };
 }
 
-function stopOscA(){if(oscA){try{oscA.stop();}catch(e){}oscA=null;gainA=null;}}
-function stopOscB(){if(oscB){try{oscB.stop();}catch(e){}oscB=null;gainB=null;}}
+function killOscA(){ if(oscA){ try{oscA.stop();}catch(e){} oscA=null; gainA=null; } }
+function killOscB(){ if(oscB){ try{oscB.stop();}catch(e){} oscB=null; gainB=null; } }
 
-function makeOsc(freq,wave,amp){
-  var o=audioCtx.createOscillator(),g=audioCtx.createGain();
-  o.type=wave==='triangle'?'triangle':wave==='square'?'square':'sine';
-  o.frequency.value=freq; g.gain.value=amp/5*0.3;
-  o.connect(g); g.connect(masterGain); o.start();
-  return{osc:o,gain:g};
+function launchA(){
+  if(!audioCtx || !S.spkOn || S.muted || S.micOn || !S.a.on) return;
+  killOscA();
+  var r = makeOscNode(S.a.freq, S.a.wave, S.a.amp);
+  oscA = r.osc; gainA = r.gain;
 }
+function launchB(){
+  if(!audioCtx || !S.spkOn || S.muted || !S.b.on) return;
+  killOscB();
+  var r = makeOscNode(S.b.freq, S.b.wave, S.b.amp);
+  oscB = r.osc; gainB = r.gain;
+}
+function launchBoth(){ launchA(); launchB(); }
 
-function startOscA(){
-  if(!audioCtx||S.muted||!S.spkOn||S.micOn||!S.a.on)return;
-  stopOscA(); var r=makeOsc(S.a.freq,S.a.wave,S.a.amp); oscA=r.osc; gainA=r.gain;
-}
-function startOscB(){
-  if(!audioCtx||S.muted||!S.spkOn||!S.b.on)return;
-  stopOscB(); var r=makeOsc(S.b.freq,S.b.wave,S.b.amp); oscB=r.osc; gainB=r.gain;
-}
-function startBoth(){startOscA();startOscB();}
-
-// On every user interaction: create the AudioContext if needed, resume it if
-// suspended, then (re)start oscillators. This handles:
-//   1. First ever click — creates context and starts oscillators
-//   2. Context suspended by browser after inactivity — resumes and restarts
-//   3. No double-starting: stopOscA/B guard against duplicate nodes
-function unlockAudio(){
-  if(!audioCtx){
-    initAudio();
-    resumeCtx(startBoth);
-    return;
-  }
-  if(audioCtx.state==='suspended'){
-    audioCtx.resume().then(function(){
-      if(S.spkOn&&!S.muted){
-        if(!oscA&&S.a.on&&!S.micOn)startOscA();
-        if(!oscB&&S.b.on)startOscB();
-      }
-    });
-  }
-}
-document.addEventListener('mousedown',unlockAudio);
-document.addEventListener('touchstart',unlockAudio);
-
+// Speaker ON/OFF — this is the ONLY place the AudioContext is created.
+// Being called from onclick makes it a genuine user gesture in all browsers.
 function togSpk(){
-  S.spkOn=!S.spkOn; var b=document.getElementById('bt-spk');
-  b.textContent='SPEAKER: '+(S.spkOn?'ON':'OFF'); b.className='ab'+(S.spkOn?' aon':'');
-  if(!S.spkOn){stopOscA();stopOscB();}
-  else{resumeCtx(startBoth);}
+  S.spkOn = !S.spkOn;
+  var b = document.getElementById('bt-spk');
+  b.textContent = 'SPEAKER: ' + (S.spkOn ? 'ON' : 'OFF');
+  b.className   = 'ab' + (S.spkOn ? ' aon' : '');
+  if(!S.spkOn){
+    killOscA(); killOscB();
+  } else {
+    buildAudioGraph();          // safe no-op if already built
+    launchBoth();
+  }
 }
-function togMute(){
-  S.muted=!S.muted; var b=document.getElementById('bt-mute');
-  b.textContent='MUTE: '+(S.muted?'ON':'OFF'); b.className='ab'+(S.muted?' muted':'');
-  if(S.muted){stopOscA();stopOscB();}
-  else if(S.spkOn){resumeCtx(startBoth);}
-}
-function updateFreqA(){if(oscA)oscA.frequency.value=S.a.freq;else if(S.spkOn&&!S.muted&&audioCtx&&S.a.on)startOscA();}
-function updateFreqB(){if(oscB)oscB.frequency.value=S.b.freq;else if(S.spkOn&&!S.muted&&audioCtx&&S.b.on)startOscB();}
-function updateWaveA(){stopOscA();if(S.spkOn&&!S.muted&&audioCtx&&S.a.on)startOscA();}
-function updateWaveB(){stopOscB();if(S.spkOn&&!S.muted&&audioCtx&&S.b.on)startOscB();}
-function updateGainA(){if(gainA)gainA.gain.value=S.a.amp/5*0.3;}
-function updateGainB(){if(gainB)gainB.gain.value=S.b.amp/5*0.3;}
 
-// Generator channel on/off
+function togMute(){
+  S.muted = !S.muted;
+  var b = document.getElementById('bt-mute');
+  b.textContent = 'MUTE: ' + (S.muted ? 'ON' : 'OFF');
+  b.className   = 'ab' + (S.muted ? ' muted' : '');
+  if(S.muted){
+    killOscA(); killOscB();
+  } else if(S.spkOn && audioCtx){
+    launchBoth();
+  }
+}
+
+// Live updates while audio is running
+function updateFreqA(){
+  if(oscA) oscA.frequency.value = S.a.freq;
+}
+function updateFreqB(){
+  if(oscB) oscB.frequency.value = S.b.freq;
+}
+function updateWaveA(){ killOscA(); launchA(); }
+function updateWaveB(){ killOscB(); launchB(); }
+function updateGainA(){ if(gainA) gainA.gain.value = (S.a.amp/5)*0.28; }
+function updateGainB(){ if(gainB) gainB.gain.value = (S.b.amp/5)*0.28; }
+
 function togGenCh(ch){
   var g=ch==='a'?S.a:S.b;
   g.on=!g.on;
   var b=document.getElementById('gen-'+ch+'-tog');
   if(ch==='a'){b.textContent='CH A: '+(g.on?'ON':'OFF');b.className='ch-tog'+(g.on?' aon':'');}
   else{b.textContent='CH B: '+(g.on?'ON':'OFF');b.className='ch-tog'+(g.on?' yon':'');}
-  if(!g.on){if(ch==='a')stopOscA();else stopOscB();}
-  else if(S.spkOn&&!S.muted&&audioCtx){if(ch==='a')startOscA();else startOscB();}
+  if(!g.on){ if(ch==='a')killOscA(); else killOscB(); }
+  else if(S.spkOn&&!S.muted&&audioCtx){ if(ch==='a')launchA(); else launchB(); }
 }
 
 async function togMic(){
@@ -590,20 +593,26 @@ async function togMic(){
   if(!S.micOn){
     try{
       micStream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});
-      initAudio(); await audioCtx.resume();
+      // Build audio graph if speaker was turned on first; otherwise just analyse
+      if(!audioCtx){ buildAudioGraph(); }
+      if(audioCtx.state==='suspended') await audioCtx.resume();
       var src=audioCtx.createMediaStreamSource(micStream);
       micAnalyser=audioCtx.createAnalyser(); micAnalyser.fftSize=1024;
       micBuf=new Float32Array(micAnalyser.fftSize);
       src.connect(micAnalyser); S.micOn=true;
       b.textContent='MIC INPUT: ON'; b.className='ab mic-on';
-      warn.style.display='none'; stopOscA();
-    }catch(e){warn.style.display='inline-block';warn.textContent='Microphone access denied';}
+      warn.style.display='none';
+      killOscA(); // stop Ch A audio while mic is live to prevent feedback
+    }catch(e){
+      warn.style.display='inline-block';
+      warn.textContent='Microphone access denied';
+    }
   }else{
     if(micStream)micStream.getTracks().forEach(function(t){t.stop();});
-    micStream=null;micAnalyser=null;S.micOn=false;
+    micStream=null; micAnalyser=null; S.micOn=false;
     b.textContent='MIC INPUT: OFF'; b.className='ab';
     warn.style.display='none';
-    if(S.spkOn&&!S.muted&&audioCtx&&S.a.on)startOscA();
+    if(S.spkOn&&!S.muted&&audioCtx&&S.a.on) launchA();
   }
 }
 
